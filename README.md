@@ -11,4 +11,4 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
   
 ## Sample result (scene 3)
 
-![Here is my favorite scene gaven by the teachers](https://www.deviantart.com/mathismargot/art/Advanced-Ray-Tracing-algorithm-s-result-2-785060064)
+![Here is my favorite scene gaven by the teachers](https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/intermediary/f/3bad3b3a-3db4-4a00-b8d9-0c35d1c1de9c/dczek80-e615718b-f276-405b-b328-fb09ce0c362d.png)
