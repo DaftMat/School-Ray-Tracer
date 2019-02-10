@@ -9,5 +9,6 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
   Command : `./mrt [out_file_name] [id_scene]`
   Width `id_scene` between 0 and 4.
   
-##
-Here is my favorite scene gaven by the teachers :
+## Sample result (scene 3)
+
+![Here is my favorite scene gaven by the teachers](https://www.deviantart.com/mathismargot/art/Advanced-Ray-Tracing-algorithm-s-result-2-785060064)
