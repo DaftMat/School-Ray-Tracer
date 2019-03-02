@@ -72,7 +72,7 @@ Scene *initScene0() {
   return scene;
 }
 
-Scene *initScene1() {
+Scene *initScene1(float ind) {
 
   Scene *scene = initScene();
   setCamera(scene, point3(3, 0, 0), vec3(0, 0.3, 0), vec3(0, 1, 0), 60,
@@ -85,29 +85,39 @@ Scene *initScene1() {
   mat.specularColor = color3(0.4f);
   mat.diffuseColor = color3(0.6f);
 
-  for (int i = 0; i < 10; ++i) {
-    mat.diffuseColor = color3(0.301, 0.034, 0.039);
-    mat.specularColor = color3(1.0, 0.992, 0.98);
-    mat.IOR = 1.1382;
-    mat.roughness = 0.0886;
-    mat.roughness = ((float)10 - i) / (10 * 9.f);
-    addObject(scene, initSphere(point3(0, 0, -1.5 + i / 9.f * 3.f), .15, mat));
-  }
-  for (int i = 0; i < 10; ++i) {
-    mat.diffuseColor = color3(0.012, 0.036, 0.106);
-    mat.specularColor = color3(1.0, 0.965, 1.07);
-    mat.IOR = 1.1153;
-    mat.roughness = 0.068;
-    mat.roughness = ((float)i + 1) / 10.f;
-    addObject(scene, initSphere(point3(0, 1, -1.5 + i / 9.f * 3.f), .15, mat));
-  }
+//  for (int i = 0; i < 10; ++i) {
+//    mat.diffuseColor = color3(0.301, 0.034, 0.039);
+//    mat.specularColor = color3(1.0, 0.992, 0.98);
+//    mat.IOR = 1.1382;
+//	  mat.transparency = 0.f;
+//    mat.roughness = 0.0886;
+//    mat.roughness = ((float)10 - i) / (10 * 9.f);
+//    addObject(scene, initSphere(point3(0, 0, -1.5 + i / 9.f * 3.f), .15, mat));
+//  }
+//  for (int i = 0; i < 10; ++i) {
+//    mat.diffuseColor = color3(0.012, 0.036, 0.106);
+//    mat.specularColor = color3(1.0, 0.965, 1.07);
+//    mat.IOR = 1.1153;
+//	  mat.transparency = 0.f;
+//    mat.roughness = 0.068;
+//    mat.roughness = ((float)i + 1) / 10.f;
+//    addObject(scene, initSphere(point3(0, 1, -1.5 + i / 9.f * 3.f), .15, mat));
+//  }
   mat.diffuseColor = color3(0.014, 0.012, 0.012);
   mat.specularColor = color3(1.0, 0.882, 0.786);
-  mat.IOR = 2.4449;
-  mat.roughness = 0.0681;
+  mat.IOR = 1.1f;
+  mat.roughness = 0.09f;
+	mat.transparency = 1.f;
   addObject(scene, initSphere(point3(-3.f, 1.f, 0.f), 2., mat));
 
-  mat.diffuseColor = color3(0.016, 0.073, 0.04);
+	mat.diffuseColor = color3(0.014, 0.012, 0.012);
+	mat.specularColor = color3(1.0, 0.882, 0.786);
+	mat.IOR = 2.4449;
+	mat.roughness = 0.0681;
+	mat.transparency = 0.f;
+	addObject(scene, initSphere(point3(-7.f, .5f, ind), 1., mat));
+
+  mat.diffuseColor = color3(0.9, 0.1, 0.04);
   mat.specularColor = color3(1.0, 1.056, 1.146);
   mat.IOR = 1.1481;
   mat.roughness = 0.0625;
@@ -163,6 +173,7 @@ Scene *initScene3() {
   mat.specularColor = color3(1.0, 0.992, 0.98);
   mat.IOR = 1.1382;
   mat.roughness = 0.0886;
+  mat.transparency = 0.f;
 
   addLight(scene, initLight(point3(0, 1.7, 1), .5f * color3(3, 3, 3)));
   addLight(scene, initLight(point3(3, 2, 3), .5f * color3(4, 4, 4)));
@@ -170,32 +181,37 @@ Scene *initScene3() {
 
   mat.diffuseColor = color3(0.014, 0.012, 0.012);
   mat.specularColor = color3(0.7, 0.882, 0.786);
-  mat.IOR = 6;
-  mat.roughness = 0.0181;
+  mat.IOR = 1.5f;
+  mat.roughness = 0.018f;
+  mat.transparency = .99f;
   addObject(scene, initSphere(point3(0, 0.1, 0), .3, mat));
 
   mat.diffuseColor = color3(0.26, 0.036, 0.014);
   mat.specularColor = color3(1.0, 0.852, 1.172);
-  mat.IOR = 1.3771;
+  mat.IOR = 1.333f;
   mat.roughness = 0.01589;
+  mat.transparency = 0.f;
   addObject(scene, initSphere(point3(1, -.05, 0), .15, mat));
 
   mat.diffuseColor = color3(0.014, 0.012, 0.012);
   mat.specularColor = color3(0.7, 0.882, 0.786);
   mat.IOR = 3;
   mat.roughness = 0.00181;
+  mat.transparency = 0.f;
   addObject(scene, initSphere(point3(3, 0.05, 2), .25, mat));
 
   mat.diffuseColor = color3(0.46, 0.136, 0.114);
   mat.specularColor = color3(0.8, 0.852, 0.8172);
   mat.IOR = 1.5771;
   mat.roughness = 0.01589;
+  mat.transparency = 0.f;
   addObject(scene, initSphere(point3(1.3, 0., 2.6), 0.215, mat));
 
   mat.diffuseColor = color3(0.06, 0.26, 0.22);
   mat.specularColor = color3(0.70, 0.739, 0.721);
   mat.IOR = 1.3051;
   mat.roughness = 0.567;
+  mat.transparency = 0.f;
   addObject(scene, initSphere(point3(1.9, 0.05, 2.2), .25, mat));
 
   mat.diffuseColor = color3(0.012, 0.036, 0.406);
@@ -203,24 +219,28 @@ Scene *initScene3() {
   mat.IOR = 1.1153;
   mat.roughness = 0.068;
   mat.roughness = 0.18;
+  mat.transparency = 0.f;
   addObject(scene, initSphere(point3(0, 0, 1), .20, mat));
 
   mat.diffuseColor = color3(.2, 0.4, .3);
   mat.specularColor = color3(.2, 0.2, .2);
   mat.IOR = 1.382;
   mat.roughness = 0.05886;
+  mat.transparency = 0.f;
   addObject(scene, initPlane(vec3(0, 1, 0), 0.2, mat));
 
   mat.diffuseColor = color3(.5, 0.09, .07);
   mat.specularColor = color3(.2, .2, .1);
   mat.IOR = 1.8382;
   mat.roughness = 0.886;
+  mat.transparency = 0.f;
   addObject(scene, initPlane(vec3(1, 0.0, -1.0), 2, mat));
 
   mat.diffuseColor = color3(0.1, 0.3, .05);
   mat.specularColor = color3(.5, .5, .5);
   mat.IOR = 1.9382;
   mat.roughness = 0.0886;
+  mat.transparency = 0.f;
   addObject(scene, initPlane(vec3(0.3, -0.2, 1), 4, mat));
   return scene;
 }
@@ -294,7 +314,12 @@ int main(int argc, char *argv[]) {
     scene = initScene0();
     break;
   case 1:
-    scene = initScene1();
+	  for (float i = -3.f ; i < 3.f ; i += 0.15f){
+        scene = initScene1(i);
+	    renderImage(img, scene);
+		  basename[strlen(basename)-1]++;
+		  saveImage(img, basename);
+	  }
     break;
   case 2:
     scene = initScene2();

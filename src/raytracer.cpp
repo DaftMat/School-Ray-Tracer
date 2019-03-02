@@ -37,13 +37,17 @@ bool intersectSphere(Ray *ray, Intersection *intersection, Object *obj) {
   if (del > 0.0f){
 	  float t = (b - sqrtf(del));
 	  if (t >= ray->tmax) return false;
+	  vec3 pos = ray->orig + t*ray->dir;
+	  vec3 n = normalize(pos - obj->geom.sphere.center);
 	  if (t <= ray->tmin){
 		  t = (b + sqrtf(del));
 		  if (t <= ray->tmin || t > ray->tmax) return false;
+		  pos = ray->orig + t*ray->dir;
+		  n = normalize(obj->geom.sphere.center - pos);
 	  }
 	  ray->tmax = t;
-	  intersection->position = ray->orig + t*ray->dir;
-      intersection->normal = normalize(intersection->position-obj->geom.sphere.center);
+	  intersection->position = pos;
+      intersection->normal = n;
 	  intersection->mat = &obj->mat;
 	  return true;
   }
@@ -183,48 +187,49 @@ color3 shade(vec3 n, vec3 v, vec3 l, color3 lc, Material *mat) {
 //! of intersect scene
 
 color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree) {
-
-  color3 ret = color3(0.0f);
-  if (ray->depth > 5)   return ret;
-  Intersection intersection;
+    color3 ret = color3(0.0f);
+    Intersection intersection;
+    Ray shadow;
+    Ray reflectedRay;
+    Ray transmittedRay;
 
 	if (intersectScene(scene, ray, &intersection)){
-		color3 cd(0.0f);
-		color3 cr(0.0f);
-		color3 ct(0.0f);
 	    for (auto &light : scene->lights) {
 		    vec3 dist = (light->position - intersection.position);
 		    float t = length(dist);
 		    vec3 l = normalize(dist*(1.0f/t));
-		    Ray shadow;
-		    shadow.orig = intersection.position + acne_eps * l;
-		    shadow.dir = l;
-		    shadow.tmin = 0.0f;
-		    shadow.tmax = t;
+		    vec3 shadowOrig = intersection.position + acne_eps * l;
+		    rayInit(&shadow, shadowOrig, l, 0.f, t, ray->depth);
 		    Intersection fake;
-		    if (!intersectScene(scene, &shadow, &fake))
-		        cd += shade(intersection.normal, -ray->dir, l, light->color, intersection.mat);
+            if (!intersectScene(scene, &shadow, &fake)) {
+                ret += shade(intersection.normal, -ray->dir, l, light->color, intersection.mat);
+            }
 		}
 
-		Ray reflectedRay;
-	    reflectedRay.dir = normalize(reflect(ray->dir, intersection.normal));
-        reflectedRay.orig = intersection.position + acne_eps * normalize(intersection.normal);
-	    reflectedRay.tmin = 0.0f;
-	    reflectedRay.tmax = 10000.f;
-	    reflectedRay.depth = ray->depth+1;
-	    float Fr = RDM_Fresnel(dot(reflectedRay.dir, intersection.normal), 1.0f, intersection.mat->IOR);
-        cr = trace_ray(scene, &reflectedRay, tree);
+        if (ray->depth < 10){
+		    if (intersection.mat->transparency < 1.f) {
+			    vec3 reflectDir = normalize(reflect(ray->dir, intersection.normal));
+			    vec3 reflectOrig = intersection.position + acne_eps * reflectDir;
+			    rayInit(&reflectedRay, reflectOrig, reflectDir, 0.f, 10000.f, ray->depth + 1);
+			    float Fr = RDM_Fresnel(dot(reflectDir, intersection.normal), 1.0f, intersection.mat->IOR);
+			    ret += (1.f - intersection.mat->transparency) * Fr * trace_ray(scene, &reflectedRay, tree) * intersection.mat->specularColor;
+		    }
 
-//	    Ray transmittedRay;
-//	    transmittedRay.dir = normalize(refract(ray->dir, intersection.normal, intersection.mat->IOR));
-//	    transmittedRay.orig = intersection.position + acne_eps * normalize(-intersection.normal);
-//	    transmittedRay.tmin = 0.0f;
-//	    transmittedRay.tmax = 10000.f;
-//        transmittedRay.depth = ray->depth+1;
-//	    //float Ft = RDM_Fresnel(dot(transmittedRay.dir, intersection.normal), 1.0f, intersection.mat->IOR);
-//	    ct = trace_ray(scene, &transmittedRay, tree);
+	        if (intersection.mat->transparency > 0.0f){
+			    vec3 refractDir = normalize(glm::refract(ray->dir, intersection.normal,1.f/intersection.mat->IOR));
+			    vec3 refractOrig = intersection.position + acne_eps * refractDir;
+			    rayInit(&transmittedRay, refractOrig, refractDir, 0.f, 10000.f, ray->depth+1);
+			    ret += intersection.mat->transparency*trace_ray(scene, &transmittedRay, tree);//*intersection.mat->specularColor;
+	        }
 
-	    ret = cd + (Fr*cr);// - ct*intersection.mat->transparency;
+        }
+
+//		if (ret.r < 0.f) ret.r = 0.f;
+//		if (ret.r > 1.f) ret.r = 1.f;
+//		if (ret.g < 0.f) ret.g = 0.f;
+//		if (ret.g > 1.f) ret.g = 1.f;
+//		if (ret.b < 0.f) ret.b = 0.f;
+//		if (ret.b > 1.f) ret.b = 1.f;
 	}else{
 	    ret = scene->skyColor;
 	}
@@ -267,20 +272,21 @@ void renderImage(Image *img, Scene *scene) {
     #pragma omp parallel for
     for (size_t i = 0; i < img->width; i++) {
       color3 *ptr = getPixelPtr(img, i, j);
+      vec3 center = scene->cam.center + ray_delta_x + ray_delta_y;
+      int nb_rays = 5;
 
-      //Anti-aliasing : cut each pixel in 15 parts, and get the average
-      for (float aj = -1.f ; aj < 1.1f ; aj+=.5f){
-          for (float ai = -1.f ; ai < 1.1f ; ai+=.5f){
-              //I decided to adapt a little the sampling technique, getting parts of pixels closer to the center of this one.
-              vec3 ray_dir = scene->cam.center + ray_delta_x + ray_delta_y + float(i) * dx + float(j) * dy + ai*delta_x*0.2f + aj*delta_y*0.2f;
+      //Anti-aliasing
+      for (float aj = -0.5f+(1.f/(2.f*nb_rays)) ; aj < .5f ; aj+=1.f/nb_rays){
+          for (float ai = -0.5f+(1.f/(2.f*nb_rays)) ; ai < .5f ; ai+=1.f/nb_rays){
+              vec3 ray_dir = center + (float(i)+aj) * dx + (float(j)+aj) * dy;
 
               Ray rx;
               rayInit(&rx, scene->cam.position, normalize(ray_dir));
               *ptr += trace_ray(scene, &rx, tree);
           }
       }
-      //average : 5*5 iterations.
-      *ptr /= 25.f;
+      //average
+      *ptr *= (1.f/(nb_rays*nb_rays));
 
     }
   }
