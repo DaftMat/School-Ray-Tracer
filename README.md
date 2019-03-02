@@ -16,3 +16,7 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
 ## Sample result (scene 3)
 
 ![Here is my favorite scene gaven by the teachers](https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/intermediary/f/3bad3b3a-3db4-4a00-b8d9-0c35d1c1de9c/dczek80-e615718b-f276-405b-b328-fb09ce0c362d.png)
+
+## Refraction result (scene 1)
+
+![Here is the refraction result](https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/intermediary/f/3bad3b3a-3db4-4a00-b8d9-0c35d1c1de9c/dd135q3-c4f2e02b-f0eb-4b67-ac37-e9a71c1f5a9e.png)
