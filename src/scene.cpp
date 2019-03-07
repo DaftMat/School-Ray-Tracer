@@ -9,6 +9,7 @@ Object *initSphere(point3 center, float radius, Material mat) {
     ret->geom.type = SPHERE;
     ret->geom.sphere.center = center;
     ret->geom.sphere.radius = radius;
+    ret->geom.sphere.dir = vec3(0.f,0.f,1.f);
     memcpy(&(ret->mat), &mat, sizeof(Material));
     return ret;
 }

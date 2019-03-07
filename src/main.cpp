@@ -84,6 +84,12 @@ Scene *initScene1(float ind) {
   mat.roughness = 0.2;
   mat.specularColor = color3(0.4f);
   mat.diffuseColor = color3(0.6f);
+  mat.hasImgTexture = false;
+  mat.hasBumpTexture = true;
+  mat.hasSpecTexture = false;
+  mat.spec_texture = loadImageJPG(static_cast<char*>("out/8k_earth_specular_map.jpg"));
+	mat.image_texture = loadImageJPG(static_cast<char*>("out/earth8k.jpg"));
+	mat.bump_texture = loadImageJPG(static_cast<char*>("out/squares2.jpg"));
 
 //  for (int i = 0; i < 10; ++i) {
 //    mat.diffuseColor = color3(0.301, 0.034, 0.039);
@@ -103,13 +109,16 @@ Scene *initScene1(float ind) {
 //    mat.roughness = ((float)i + 1) / 10.f;
 //    addObject(scene, initSphere(point3(0, 1, -1.5 + i / 9.f * 3.f), .15, mat));
 //  }
-  mat.diffuseColor = color3(0.014, 0.012, 0.012);
+  mat.diffuseColor = color3(0.f, 0.f, 0.f);
   mat.specularColor = color3(1.0, 0.882, 0.786);
-  mat.IOR = 1.1f;
+  mat.IOR = 1.5f;
   mat.roughness = 0.09f;
-	mat.transparency = 1.f;
+	mat.transparency = 0.9f;
   addObject(scene, initSphere(point3(-3.f, 1.f, 0.f), 2., mat));
 
+    mat.hasImgTexture = false;
+    mat.hasBumpTexture = false;
+    mat.hasSpecTexture = false;
 	mat.diffuseColor = color3(0.014, 0.012, 0.012);
 	mat.specularColor = color3(1.0, 0.882, 0.786);
 	mat.IOR = 2.4449;
@@ -174,6 +183,9 @@ Scene *initScene3() {
   mat.IOR = 1.1382;
   mat.roughness = 0.0886;
   mat.transparency = 0.f;
+    mat.hasImgTexture = false;
+    mat.hasBumpTexture = false;
+    mat.hasSpecTexture = false;
 
   addLight(scene, initLight(point3(0, 1.7, 1), .5f * color3(3, 3, 3)));
   addLight(scene, initLight(point3(3, 2, 3), .5f * color3(4, 4, 4)));
@@ -191,13 +203,18 @@ Scene *initScene3() {
   mat.IOR = 1.333f;
   mat.roughness = 0.01589;
   mat.transparency = 0.f;
-  addObject(scene, initSphere(point3(1, -.05, 0), .15, mat));
+    addObject(scene, initSphere(point3(1, -.05, 0), .15, mat));
 
   mat.diffuseColor = color3(0.014, 0.012, 0.012);
   mat.specularColor = color3(0.7, 0.882, 0.786);
   mat.IOR = 3;
   mat.roughness = 0.00181;
   mat.transparency = 0.f;
+    mat.hasBumpTexture = true;
+    mat.hasImgTexture = false;
+    mat.hasSpecTexture = false;
+    mat.image_texture = loadImageJPG(static_cast<char*>("out/earth8k.jpg"));
+    mat.bump_texture = loadImageJPG(static_cast<char*>("out/waterNormal.jpg"));
   addObject(scene, initSphere(point3(3, 0.05, 2), .25, mat));
 
   mat.diffuseColor = color3(0.46, 0.136, 0.114);
@@ -287,7 +304,6 @@ Scene *initScene4() {
   return scene;
 }
 
-
 int main(int argc, char *argv[]) {
   printf("Welcome to the L3 IGTAI RayTracer project\n");
 
@@ -307,29 +323,24 @@ int main(int argc, char *argv[]) {
     scene_id = atoi(argv[2]);
   }
 
-  Image *img = initImage(WIDTH, HEIGHT);
-  Scene *scene = NULL;
-  switch (scene_id) {
-  case 0:
-    scene = initScene0();
-    break;
-  case 1:
-	  for (float i = -3.f ; i < 3.f ; i += 0.15f){
-        scene = initScene1(i);
-	    renderImage(img, scene);
-		  basename[strlen(basename)-1]++;
-		  saveImage(img, basename);
-	  }
-    break;
-  case 2:
-    scene = initScene2();
-    break;
-  case 3:
-    scene = initScene3();
-    break;
-  case 4:
-    scene = initScene4();
-    break;
+    Image *img = initImage(WIDTH, HEIGHT);
+      Scene *scene = NULL;
+      switch (scene_id) {
+            case 0:
+                scene = initScene0();
+                break;
+          case 1:
+                scene = initScene1(1);
+                break;
+          case 2:
+                scene = initScene2();
+                break;
+          case 3:
+                scene = initScene3();
+                break;
+          case 4:
+                scene = initScene4();
+              break;
 
   default:
     scene = initScene0();

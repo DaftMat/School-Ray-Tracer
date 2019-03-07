@@ -30,6 +30,7 @@ typedef struct geometry_s {
             // sphere
             vec3 center;
             float radius;
+            vec3 dir;
         } sphere;
         struct {
             // plan

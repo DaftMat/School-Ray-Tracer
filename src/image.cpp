@@ -4,6 +4,8 @@
 #include <string.h>
 
 #define SAVE_PNG
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 color3 *getPixelPtr(Image *img, size_t x, size_t y) {
     return &(img->data[y * img->width + x]);
@@ -37,11 +39,11 @@ void saveImage(Image *img, char *basename) {
       ivec3 c = clamp(ivec3(255.f**ptr), 0, 255);
       image[cpt++] = c.x;
       image[cpt++] = c.y;
-      image[cpt++] = c.z; 
+      image[cpt++] = c.z;
       ++ptr;
-    }  
+    }
   }
-  
+
   /*Encode the image*/
   unsigned error = lodepng_encode24_file(filename, image, img->width, img->height);
   delete [] image;
@@ -81,4 +83,77 @@ void saveImage(Image *img, char *basename) {
     }
 #endif
 
+}
+
+//Function to get an Image from a file
+Image *loadImagePNG(char *filename){
+	unsigned error;
+	unsigned char* data;
+	unsigned width = 0, height = 0;
+
+	if(!error) error = lodepng_decode32_file(&data, &width, &height, filename);
+	if(error) printf("error %u: %s\n", error, lodepng_error_text(error));
+
+	Image *image = initImage(size_t(width), size_t(height));
+
+	int j = 0;
+	for (int i = 0 ; i < width*height ; ++i){
+		image->data[i].r = float(data[j++])/255.f;
+        image->data[i].g = float(data[j++])/255.f;
+        image->data[i].b = float(data[j++])/255.f;
+	}
+
+	return image;
+}
+
+Image * loadImagePPM(char *filename){
+	int i, width,height,max_value;
+	char format[8];
+	Image * image;
+	FILE * f = fopen(filename,"r");
+	if (!f){
+		fprintf(stderr,"Cannot open file %s...\n",filename);
+		exit(-1);
+	}
+	fscanf(f,"%s\n",format);
+	assert( (format[0]=='P' && format[1]=='3'));  // check P3 format
+	while(fgetc(f)=='#') // commentaire
+	{
+		while(fgetc(f) != '\n'); // aller jusqu'a la fin de la ligne
+	}
+	fseek( f, -1, SEEK_CUR);
+	fscanf(f,"%d %d\n", &width, &height);
+	fscanf(f,"%d\n", &max_value);
+	image = initImage(width, height);
+	assert(image != NULL);
+	assert(image->data != NULL);
+
+	for(i=0 ; i<width*height ; i++){
+		int r,g,b;
+		fscanf(f,"%d %d %d", &r, &g, &b);
+		image->data[i].r = float(r)/255.f;
+		image->data[i].g = float(g)/255.f;
+		image->data[i].b = float(b)/255.f;
+	}
+	fclose(f);
+	return image;
+}
+
+Image * loadImageJPG(char *filename){
+	int width, height, bpp;
+
+	uint8_t* rgb_image = stbi_load(filename, &width, &height, &bpp, 3);
+
+	Image *img = initImage(unsigned(width), unsigned(height));
+
+	int j=0;
+	for (unsigned i = 0 ; i < width*height ; ++i){
+		img->data[i].r = float(rgb_image[j++])/255.f;
+		img->data[i].g = float(rgb_image[j++])/255.f;
+		img->data[i].b = float(rgb_image[j++])/255.f;
+	}
+
+	stbi_image_free(rgb_image);
+
+	return img;
 }

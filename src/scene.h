@@ -2,6 +2,7 @@
 #define __SCENE_H__
 
 #include "defines.h"
+#include "image.h"
 
 // SCENE
 typedef struct scene_s Scene;
@@ -10,10 +11,18 @@ typedef struct light_s Light;
 typedef struct camera_s Camera;
 
 typedef struct material_s {
-  float IOR;	//! Index of refraction (for dielectric)
-  float roughness; //! 0.001 - 0.01 : very smooth finish with slight imperfections. 0.1 : relatively rough. 0.3-0.7 extremely rough
-  color3 specularColor;	//! Specular "albedo"
-  color3 diffuseColor;	//! Base color
+	float IOR;	//! Index of refraction (for dielectric)
+	float roughness; //! 0.001 - 0.01 : very smooth finish with slight imperfections. 0.1 : relatively rough. 0.3-0.7 extremely rough
+	color3 specularColor;	//! Specular "albedo"
+	color3 diffuseColor;	//! Base color
+	float transparency;
+	Image *image_texture;
+	Image *bump_texture;
+	Image *spec_texture;
+	color3 (*procedural_texture) (size_t x, size_t y) = NULL;
+	bool hasBumpTexture;
+	bool hasImgTexture;
+	bool hasSpecTexture;
 } Material;
 
 enum Etype {SPHERE=1, PLANE};

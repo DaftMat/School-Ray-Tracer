@@ -6,15 +6,115 @@
 #include "scene_types.h"
 #include <stdio.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <glm/gtc/epsilon.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <iostream>
 
 /// acne_eps is a small constant used to prevent acne when computing
 /// intersection
 //  or boucing (add this amount to the position before casting a new ray !
 const float acne_eps = 1e-4;
-const auto PI = 3.141592653589793238462643383279502884197169f;
 //Get the direction from p2 to p1, substracting them.
+
+/* Texturing */
+color3 applyImgTexObject(const Intersection &intersection){
+    if (!intersection.mat->hasImgTexture){
+        return intersection.mat->diffuseColor;
+    }
+
+    switch(intersection.obj->geom.type){
+        case Etype::SPHERE:
+            return applyImgTexSphere(intersection);
+        default:
+            return intersection.mat->diffuseColor;
+    }
+}
+
+color3 applySpecTexObject(const Intersection &intersection){
+    if (!intersection.mat->hasSpecTexture){
+        return intersection.mat->specularColor;
+    }
+
+    switch(intersection.obj->geom.type){
+        case Etype::SPHERE:
+            return applySpecTexSphere(intersection);
+        default:
+            return intersection.mat->diffuseColor;
+    }
+}
+
+void findUVSphere(const Intersection &intersection, float &u, float &v, float &phiR, float &thetaR){
+    vec3 Vp(0.f,-1.f,0.f), Ve(intersection.obj->geom.sphere.dir);
+    float U = 0.f, V = 0.f, phi = 0.f, theta = 0.f;
+    vec3 N = intersection.baseNormal;
+
+    phi = acosf(dot(-N, Vp));
+    V = phi * (1.f/glm::pi<float>());
+
+    if (V != 0.0f && V != 1.0f) {
+        theta = acosf(dot(Ve, N) / sinf(phi)) / (2.f * glm::pi<float>());
+        (dot(cross(Vp, Ve), N) > 0.0f) ? U = theta : U = 1.f - theta;
+    }
+
+    phiR = phi;
+    thetaR = theta;
+    u = U;
+    v = V;
+}
+
+void findUVSphere(const Intersection &intersection, float &u, float &v){
+    float tempa, tempb;
+    findUVSphere(intersection, u, v, tempa, tempb);
+}
+
+void applyBumpTexSphere(Intersection *intersection){
+    if (!intersection->mat->hasBumpTexture){
+        intersection->normal = intersection->baseNormal;
+        return;
+    }
+    float U = 0.f, V = 0.f, phi = 0.f, theta = 0.f;
+
+    findUVSphere(*intersection, U, V, phi, theta);
+    //phi -= acne_eps;//GLM_CONFIG_PRECISION_FLOAT;
+    //theta -= acne_eps;//GLM_CONFIG_PRECISION_FLOAT;
+
+    auto x = (size_t) (U*float(intersection->mat->bump_texture->width));
+    auto y = (size_t) (V*float(intersection->mat->bump_texture->height));
+
+    vec3 sphereOrientation = intersection->obj->geom.sphere.dir;
+    vec3 map_n(*getPixelPtr(intersection->mat->bump_texture, x, y));
+    vec3 finalized_map_n(map_n.x-0.5f, map_n.y-0.5f, map_n.z);
+    finalized_map_n = normalize(finalized_map_n);
+    vec3 rot = cross(sphereOrientation, intersection->baseNormal);
+    float angle = acosf(dot(sphereOrientation, intersection->baseNormal));
+    vec3 ret = rotate(finalized_map_n, angle, rot);
+    intersection->normal = normalize(ret);
+
+}
+
+color3 applyImgTexSphere(const Intersection &intersection){
+	float U = 0.f, V = 0.f;
+
+	findUVSphere(intersection, U, V);
+
+	auto x = (size_t) (U*float(intersection.mat->image_texture->width));
+	auto y = (size_t) (V*float(intersection.mat->image_texture->height));
+
+	return *getPixelPtr(intersection.mat->image_texture, x, y);
+}
+
+color3 applySpecTexSphere(const Intersection &intersection){
+    float U = 0.f, V = 0.f;
+
+    findUVSphere(intersection, U, V);
+
+    auto x = (size_t) (U*float(intersection.mat->spec_texture->width));
+    auto y = (size_t) (V*float(intersection.mat->spec_texture->height));
+
+    return *getPixelPtr(intersection.mat->spec_texture, x, y);
+}
 
 bool intersectPlane(Ray *ray, Intersection *intersection, Object *obj) {
 	vec3 n = normalize(obj->geom.plane.normal);
@@ -25,8 +125,10 @@ bool intersectPlane(Ray *ray, Intersection *intersection, Object *obj) {
 	if (t <= ray->tmin || t > ray->tmax) return false;
 	ray->tmax = t;
 	intersection->position = ray->orig + t*ray->dir;
+	intersection->baseNormal = n;
 	intersection->normal = n;
 	intersection->mat = &obj->mat;
+    intersection->obj = obj;
 	return true;
 }
 
@@ -47,8 +149,10 @@ bool intersectSphere(Ray *ray, Intersection *intersection, Object *obj) {
 	  }
 	  ray->tmax = t;
 	  intersection->position = pos;
-      intersection->normal = n;
+	  intersection->baseNormal = normalize(n);
 	  intersection->mat = &obj->mat;
+      intersection->obj = obj;
+      applyBumpTexSphere(intersection); //edits normal
 	  return true;
   }
   return false;
@@ -92,7 +196,7 @@ float RDM_Beckmann(float NdotH, float alpha) {
     float cosS = NdotH * NdotH;
     float tanS = (1.0f-cosS) * 1.0f/(cosS);
     float alphaS = alpha * alpha;
-    float D = RDM_chiplus(NdotH) * (expf(-tanS/alphaS) * 1.0f/(PI * alphaS * (cosS * cosS)));
+    float D = RDM_chiplus(NdotH) * (expf(-tanS/alphaS) * (1.0f/(glm::pi<float>() * alphaS * (cosS * cosS))));
     return D;
 }
 
@@ -143,18 +247,18 @@ float RDM_Smith(float LdotH, float LdotN, float VdotH, float VdotN,
 // LdotN : Light . Norm
 // VdotN : View . Norm
 color3 RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN,
-                  float VdotN, Material *m) {
+                  float VdotN, Intersection *i) {
 
-  float D = RDM_Beckmann(NdotH, m->roughness);
-  float F = RDM_Fresnel(LdotH, 1.0f, m->IOR);
-  float G = RDM_Smith(LdotH, LdotN, VdotH, VdotN, m->roughness);
+  float D = RDM_Beckmann(NdotH, i->mat->roughness);
+  float F = RDM_Fresnel(LdotH, 1.0f, i->mat->IOR);
+  float G = RDM_Smith(LdotH, LdotN, VdotH, VdotN, i->mat->roughness);
 
-  return m->specularColor * ((D*F*G)/(4.0f*LdotN*VdotN));
+  return applySpecTexObject(*i) * ((D*F*G)/(4.0f*LdotN*VdotN));
 
 }
 // diffuse term of the cook torrance bsdf
-color3 RDM_bsdf_d(Material *m) {
-  return m->diffuseColor * (1.0f/PI);
+color3 RDM_bsdf_d(Intersection *i) {
+    return applyImgTexObject(*i) * (1.0f/glm::pi<float>());
 }
 
 // The full evaluation of bsdf(wi, wo) * cos (thetai)
@@ -165,14 +269,14 @@ color3 RDM_bsdf_d(Material *m) {
 // VdtoN : View . Norm
 // compute bsdf * cos(Oi)
 color3 RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN,
-                Material *m) {
-    return RDM_bsdf_s(LdotH, NdotH, VdotH, LdotN, VdotN, m) + RDM_bsdf_d(m);
+                Intersection *i) {
+    return RDM_bsdf_s(LdotH, NdotH, VdotH, LdotN, VdotN, i) + RDM_bsdf_d(i);
 
 }
 
 
 
-color3 shade(vec3 n, vec3 v, vec3 l, color3 lc, Material *mat) {
+color3 shade(vec3 n, vec3 v, vec3 l, color3 lc, Intersection *inter) {
     vec3 h = normalize((v+l)/length(v+l));
     float LdotH = dot(l, h);
     float NdotH = dot(n, h);
@@ -180,13 +284,13 @@ color3 shade(vec3 n, vec3 v, vec3 l, color3 lc, Material *mat) {
     float LdotN = dot(l, n);
     float VdotN = dot(v, n);
 
-    return lc * RDM_bsdf(LdotH, NdotH, VdotH, LdotN, VdotN, mat) * LdotN;
+    return lc * RDM_bsdf(LdotH, NdotH, VdotH, LdotN, VdotN, inter) * LdotN;
 }
 
 //! if tree is not null, use intersectKdTree to compute the intersection instead
 //! of intersect scene
 
-color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree) {
+color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree, float reflCoef) {
     color3 ret = color3(0.0f);
     Intersection intersection;
     Ray shadow;
@@ -202,34 +306,28 @@ color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree) {
 		    rayInit(&shadow, shadowOrig, l, 0.f, t, ray->depth);
 		    Intersection fake;
             if (!intersectScene(scene, &shadow, &fake)) {
-                ret += shade(intersection.normal, -ray->dir, l, light->color, intersection.mat);
+                ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
             }
 		}
 
-        if (ray->depth < 10){
+        if (ray->depth < 100 && reflCoef > 0.01f){
 		    if (intersection.mat->transparency < 1.f) {
 			    vec3 reflectDir = normalize(reflect(ray->dir, intersection.normal));
 			    vec3 reflectOrig = intersection.position + acne_eps * reflectDir;
 			    rayInit(&reflectedRay, reflectOrig, reflectDir, 0.f, 10000.f, ray->depth + 1);
 			    float Fr = RDM_Fresnel(dot(reflectDir, intersection.normal), 1.0f, intersection.mat->IOR);
-			    ret += (1.f - intersection.mat->transparency) * Fr * trace_ray(scene, &reflectedRay, tree) * intersection.mat->specularColor;
+			    ret += (1.f - intersection.mat->transparency) * Fr * trace_ray(scene, &reflectedRay, tree, reflCoef*0.5f) * intersection.mat->specularColor;
 		    }
 
 	        if (intersection.mat->transparency > 0.0f){
 			    vec3 refractDir = normalize(glm::refract(ray->dir, intersection.normal,1.f/intersection.mat->IOR));
 			    vec3 refractOrig = intersection.position + acne_eps * refractDir;
 			    rayInit(&transmittedRay, refractOrig, refractDir, 0.f, 10000.f, ray->depth+1);
-			    ret += intersection.mat->transparency*trace_ray(scene, &transmittedRay, tree);//*intersection.mat->specularColor;
+			    ret += intersection.mat->transparency*trace_ray(scene, &transmittedRay, tree, reflCoef/2.f);//*intersection.mat->specularColor;
 	        }
 
         }
 
-//		if (ret.r < 0.f) ret.r = 0.f;
-//		if (ret.r > 1.f) ret.r = 1.f;
-//		if (ret.g < 0.f) ret.g = 0.f;
-//		if (ret.g > 1.f) ret.g = 1.f;
-//		if (ret.b < 0.f) ret.b = 0.f;
-//		if (ret.b > 1.f) ret.b = 1.f;
 	}else{
 	    ret = scene->skyColor;
 	}
@@ -282,7 +380,7 @@ void renderImage(Image *img, Scene *scene) {
 
               Ray rx;
               rayInit(&rx, scene->cam.position, normalize(ray_dir));
-              *ptr += trace_ray(scene, &rx, tree);
+              *ptr += trace_ray(scene, &rx, tree, 1.0f);
           }
       }
       //average
