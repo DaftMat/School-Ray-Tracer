@@ -47,6 +47,11 @@ bool intersectAabb(Ray *theRay,  vec3 min, vec3 max) {
 int main(void){
 
   Material dummy;
+  dummy.transparency = 0.f;
+    dummy.hasImgTexture = false;
+    dummy.hasBumpTexture = false;
+    dummy.hasSpecTexture = false;
+    dummy.hasRoughTexture = false;
   Object *plane1 = initPlane(vec3(0,0,1), 0, dummy);
   Object *plane2 = initPlane(vec3(1,1,1), 2, dummy);
   Object *sphere1 = initSphere(vec3(0,0,0), 1, dummy);

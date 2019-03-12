@@ -15,14 +15,15 @@ typedef struct material_s {
 	float roughness; //! 0.001 - 0.01 : very smooth finish with slight imperfections. 0.1 : relatively rough. 0.3-0.7 extremely rough
 	color3 specularColor;	//! Specular "albedo"
 	color3 diffuseColor;	//! Base color
-	float transparency;
-	Image *image_texture;
-	Image *bump_texture;
-	Image *spec_texture;
-	color3 (*procedural_texture) (size_t x, size_t y) = NULL;
-	bool hasBumpTexture;
+	float transparency;     //! 0 : not transparent, 1 : totally transparent
+	Image *image_texture;   //! Texture that replace diffuse color
+	Image *bump_texture;    //! Texture that change normals direction
+	Image *spec_texture;    //! Texture that replace specular color
+	Image *rough_texture;   //! Texture that set roughness
 	bool hasImgTexture;
+    bool hasBumpTexture;
 	bool hasSpecTexture;
+	bool hasRoughTexture;
 } Material;
 
 enum Etype {SPHERE=1, PLANE};

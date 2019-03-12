@@ -19,36 +19,23 @@ const float acne_eps = 1e-4;
 //Get the direction from p2 to p1, substracting them.
 
 /* Texturing */
-color3 applyImgTexObject(const Intersection &intersection){
-    if (!intersection.mat->hasImgTexture){
-        return intersection.mat->diffuseColor;
-    }
-
+void findUVObject(const Intersection &intersection, float &u, float &v){
     switch(intersection.obj->geom.type){
-        case Etype::SPHERE:
-            return applyImgTexSphere(intersection);
+        case SPHERE:
+            findUVSphere(intersection, u, v);
+            break;
+        case PLANE:
+            findUVPlane(intersection, u, v);
+            break;
         default:
-            return intersection.mat->diffuseColor;
+            return;
     }
 }
 
-color3 applySpecTexObject(const Intersection &intersection){
-    if (!intersection.mat->hasSpecTexture){
-        return intersection.mat->specularColor;
-    }
-
-    switch(intersection.obj->geom.type){
-        case Etype::SPHERE:
-            return applySpecTexSphere(intersection);
-        default:
-            return intersection.mat->diffuseColor;
-    }
-}
-
-void findUVSphere(const Intersection &intersection, float &u, float &v, float &phiR, float &thetaR){
+void findUVSphere(const Intersection &intersection, float &u, float &v){
     vec3 Vp(0.f,-1.f,0.f), Ve(intersection.obj->geom.sphere.dir);
     float U = 0.f, V = 0.f, phi = 0.f, theta = 0.f;
-    vec3 N = intersection.baseNormal;
+    vec3 N(intersection.baseNormal);
 
     phi = acosf(dot(-N, Vp));
     V = phi * (1.f/glm::pi<float>());
@@ -58,15 +45,23 @@ void findUVSphere(const Intersection &intersection, float &u, float &v, float &p
         (dot(cross(Vp, Ve), N) > 0.0f) ? U = theta : U = 1.f - theta;
     }
 
-    phiR = phi;
-    thetaR = theta;
     u = U;
     v = V;
 }
 
-void findUVSphere(const Intersection &intersection, float &u, float &v){
-    float tempa, tempb;
-    findUVSphere(intersection, u, v, tempa, tempb);
+void findUVPlane(const Intersection &intersection, float &u, float &v){
+    vec3 a = cross(intersection.baseNormal, vec3(1.f,0.f,0.f));
+    vec3 b = cross(intersection.baseNormal, vec3(0.f,1.f,0.f));
+    vec3 c = cross(intersection.baseNormal, vec3(0.f,0.f,1.f));
+    vec3 max_ab = dot(a,a) < dot(b,b) ? b : a;
+
+    vec3 U = normalize(dot(max_ab,max_ab) < dot(c,c) ? c : max_ab);
+    vec3 V = normalize(cross(intersection.baseNormal, U));
+
+    u = dot(U, intersection.position);
+    v = dot(V, intersection.position);
+    u -= floor(u);
+    v -= floor(v);
 }
 
 void applyBumpTexSphere(Intersection *intersection){
@@ -74,46 +69,70 @@ void applyBumpTexSphere(Intersection *intersection){
         intersection->normal = intersection->baseNormal;
         return;
     }
-    float U = 0.f, V = 0.f, phi = 0.f, theta = 0.f;
 
-    findUVSphere(*intersection, U, V, phi, theta);
-    //phi -= acne_eps;//GLM_CONFIG_PRECISION_FLOAT;
-    //theta -= acne_eps;//GLM_CONFIG_PRECISION_FLOAT;
+    float U, V;
+    findUVObject(*intersection, U, V);
 
     auto x = (size_t) (U*float(intersection->mat->bump_texture->width));
     auto y = (size_t) (V*float(intersection->mat->bump_texture->height));
 
-    vec3 sphereOrientation = intersection->obj->geom.sphere.dir;
     vec3 map_n(*getPixelPtr(intersection->mat->bump_texture, x, y));
     vec3 finalized_map_n(map_n.x-0.5f, map_n.y-0.5f, map_n.z);
     finalized_map_n = normalize(finalized_map_n);
-    vec3 rot = cross(sphereOrientation, intersection->baseNormal);
-    float angle = acosf(dot(sphereOrientation, intersection->baseNormal));
+    vec3 rot = cross(vec3(0.f,0.f,1.f), intersection->baseNormal);
+    float angle = acosf(dot(vec3(0.f,0.f,1.f), intersection->baseNormal));
     vec3 ret = rotate(finalized_map_n, angle, rot);
     intersection->normal = normalize(ret);
-
 }
 
-color3 applyImgTexSphere(const Intersection &intersection){
-	float U = 0.f, V = 0.f;
+color3 applyImgTexObject(const Intersection &intersection){
+    if (!intersection.mat->hasImgTexture){
+        return intersection.mat->diffuseColor;
+    }
 
-	findUVSphere(intersection, U, V);
 
-	auto x = (size_t) (U*float(intersection.mat->image_texture->width));
-	auto y = (size_t) (V*float(intersection.mat->image_texture->height));
+    float U, V;
+    findUVObject(intersection, U, V);
+
+    auto x = (size_t) (U*float(intersection.mat->image_texture->width));
+    auto y = (size_t) (V*float(intersection.mat->image_texture->height));
 
 	return *getPixelPtr(intersection.mat->image_texture, x, y);
 }
 
-color3 applySpecTexSphere(const Intersection &intersection){
-    float U = 0.f, V = 0.f;
+color3 applySpecTexObject(const Intersection &intersection){
+    if (!intersection.mat->hasSpecTexture){
+        return intersection.mat->specularColor;
+    }
 
-    findUVSphere(intersection, U, V);
+    float U, V;
+    findUVObject(intersection, U, V);
 
     auto x = (size_t) (U*float(intersection.mat->spec_texture->width));
     auto y = (size_t) (V*float(intersection.mat->spec_texture->height));
 
     return *getPixelPtr(intersection.mat->spec_texture, x, y);
+}
+
+float applyRoughTexObject(const Intersection &intersection){
+    if (!intersection.mat->hasRoughTexture){
+        return intersection.mat->roughness;
+    }
+
+    float U, V;
+    findUVObject(intersection, U, V);
+
+    auto x = (size_t) (U*float(intersection.mat->rough_texture->width));
+    auto y = (size_t) (V*float(intersection.mat->rough_texture->height));
+
+    color3 cp = *getPixelPtr(intersection.mat->rough_texture, x, y);
+    float c = (cp.x + cp.y + cp.z) * (1.f/3.f);
+    if (c == 0.0f){
+        return 0.7f;
+    }
+    float rough = (1.f/c) * 0.1f;
+    if (rough > 0.7f)   rough = 0.7f;
+    return rough;
 }
 
 bool intersectPlane(Ray *ray, Intersection *intersection, Object *obj) {
@@ -126,9 +145,9 @@ bool intersectPlane(Ray *ray, Intersection *intersection, Object *obj) {
 	ray->tmax = t;
 	intersection->position = ray->orig + t*ray->dir;
 	intersection->baseNormal = n;
-	intersection->normal = n;
 	intersection->mat = &obj->mat;
     intersection->obj = obj;
+    applyBumpTexSphere(intersection);
 	return true;
 }
 
@@ -249,16 +268,17 @@ float RDM_Smith(float LdotH, float LdotN, float VdotH, float VdotN,
 color3 RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN,
                   float VdotN, Intersection *i) {
 
-  float D = RDM_Beckmann(NdotH, i->mat->roughness);
+    float roughness = applyRoughTexObject(*i);
+  float D = RDM_Beckmann(NdotH, roughness);
   float F = RDM_Fresnel(LdotH, 1.0f, i->mat->IOR);
-  float G = RDM_Smith(LdotH, LdotN, VdotH, VdotN, i->mat->roughness);
+  float G = RDM_Smith(LdotH, LdotN, VdotH, VdotN, roughness);
 
   return applySpecTexObject(*i) * ((D*F*G)/(4.0f*LdotN*VdotN));
 
 }
 // diffuse term of the cook torrance bsdf
 color3 RDM_bsdf_d(Intersection *i) {
-    return applyImgTexObject(*i) * (1.0f/glm::pi<float>());
+    return (1.f-i->mat->transparency) * applyImgTexObject(*i) * (1.0f/glm::pi<float>());
 }
 
 // The full evaluation of bsdf(wi, wo) * cos (thetai)
@@ -301,29 +321,34 @@ color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree, float reflCoef) {
 	    for (auto &light : scene->lights) {
 		    vec3 dist = (light->position - intersection.position);
 		    float t = length(dist);
-		    vec3 l = normalize(dist*(1.0f/t));
+		    vec3 l = normalize(dist);
 		    vec3 shadowOrig = intersection.position + acne_eps * l;
 		    rayInit(&shadow, shadowOrig, l, 0.f, t, ray->depth);
-		    Intersection fake;
-            if (!intersectScene(scene, &shadow, &fake)) {
+		    Intersection dummy;
+		    ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
+            if (!intersectScene(scene, &shadow, &dummy)) {
                 ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
+            }else{
+                if (dummy.mat->transparency > 0.f)
+                    ret += dummy.mat->transparency * shade(intersection.normal, -ray->dir, l, light->color, &intersection);
             }
 		}
 
-        if (ray->depth < 100 && reflCoef > 0.01f){
-		    if (intersection.mat->transparency < 1.f) {
+        if (ray->depth < 10 && reflCoef > 0.01f){
+	        float transparency = intersection.mat->transparency;
+		    if (transparency < 1.0f) {
 			    vec3 reflectDir = normalize(reflect(ray->dir, intersection.normal));
 			    vec3 reflectOrig = intersection.position + acne_eps * reflectDir;
-			    rayInit(&reflectedRay, reflectOrig, reflectDir, 0.f, 10000.f, ray->depth + 1);
+			    rayInit(&reflectedRay, reflectOrig, reflectDir, 0.f, 10000.f, ray->depth+1);
 			    float Fr = RDM_Fresnel(dot(reflectDir, intersection.normal), 1.0f, intersection.mat->IOR);
-			    ret += (1.f - intersection.mat->transparency) * Fr * trace_ray(scene, &reflectedRay, tree, reflCoef*0.5f) * intersection.mat->specularColor;
+			    ret += (1.f - transparency) * Fr * trace_ray(scene, &reflectedRay, tree, reflCoef*0.5f) * intersection.mat->specularColor * reflCoef;
 		    }
 
-	        if (intersection.mat->transparency > 0.0f){
-			    vec3 refractDir = normalize(glm::refract(ray->dir, intersection.normal,1.f/intersection.mat->IOR));
+	        if (transparency > 0.0f){
+			    vec3 refractDir = normalize(glm::refract(ray->dir, intersection.normal, 1.f/intersection.mat->IOR));
 			    vec3 refractOrig = intersection.position + acne_eps * refractDir;
 			    rayInit(&transmittedRay, refractOrig, refractDir, 0.f, 10000.f, ray->depth+1);
-			    ret += intersection.mat->transparency*trace_ray(scene, &transmittedRay, tree, reflCoef/2.f);//*intersection.mat->specularColor;
+			    ret += transparency * trace_ray(scene, &transmittedRay, tree, reflCoef*0.5f)*intersection.mat->specularColor;
 	        }
 
         }
@@ -371,21 +396,20 @@ void renderImage(Image *img, Scene *scene) {
     for (size_t i = 0; i < img->width; i++) {
       color3 *ptr = getPixelPtr(img, i, j);
       vec3 center = scene->cam.center + ray_delta_x + ray_delta_y;
+        Ray rx;
       int nb_rays = 5;
 
       //Anti-aliasing
       for (float aj = -0.5f+(1.f/(2.f*nb_rays)) ; aj < .5f ; aj+=1.f/nb_rays){
           for (float ai = -0.5f+(1.f/(2.f*nb_rays)) ; ai < .5f ; ai+=1.f/nb_rays){
-              vec3 ray_dir = center + (float(i)+aj) * dx + (float(j)+aj) * dy;
+              vec3 ray_dir = center + (float(i)+ai) * dx + (float(j)+aj) * dy;
 
-              Ray rx;
               rayInit(&rx, scene->cam.position, normalize(ray_dir));
               *ptr += trace_ray(scene, &rx, tree, 1.0f);
           }
       }
       //average
-      *ptr *= (1.f/(nb_rays*nb_rays));
-
+      *ptr *= (1.f/float(nb_rays*nb_rays));
     }
   }
 }
