@@ -3,6 +3,8 @@
 
 #include "defines.h"
 #include "image.h"
+#include <string>
+#include <vector>
 
 // SCENE
 typedef struct scene_s Scene;
@@ -26,12 +28,15 @@ typedef struct material_s {
 	bool hasRoughTexture;
 } Material;
 
-enum Etype {SPHERE=1, PLANE};
+enum Etype {SPHERE=1, PLANE, TRIANGLE};
 
+std::vector<std::string> split(const std::string& str, const std::string& delim);
 
 //! create a new sphere structure
 Object* initSphere(point3 center, float radius, Material mat);
 Object* initPlane(vec3 normal, float d, Material mat);
+Object* initTriangle(vec3 v0, vec3 v1, vec3 v2, Material mat);
+void initComplex(Scene *scene, const std::string &filename, Material mat, float scale, vec3 pos, float angle);
 
 //! release memory for the object obj
 void freeObject(Object *obj);

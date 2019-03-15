@@ -143,6 +143,7 @@ Image * loadImageJPG(char *filename){
 	int width, height, bpp;
 
 	uint8_t* rgb_image = stbi_load(filename, &width, &height, &bpp, 3);
+	if (rgb_image == NULL)  return nullptr;
 
 	Image *img = initImage(unsigned(width), unsigned(height));
 

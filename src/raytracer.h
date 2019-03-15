@@ -26,7 +26,7 @@ typedef struct intersection_s {
 color3 applyImgTexObject(const Intersection &intersection);
 color3 applySpecTexObject(const Intersection &intersection);
 float applyRoughTexObject(const Intersection &intersection);
-void findUVObject(const Intersection &intersection, float &u, float &v);
+bool findUVObject(const Intersection &intersection, float &u, float &v);
 void findUVSphere(const Intersection &intersection, float &u, float &v);
 void findUVPlane(const Intersection &intersection, float &u, float &v);
 void applyBumpTexSphere(Intersection *intersection);
@@ -35,6 +35,7 @@ bool intersectScene(const Scene *scene, Ray *ray, Intersection *intersection );
 bool intersectCylinder (Ray *ray, Intersection *intersection, Object *cylinder);
 bool intersectPlane(Ray *ray, Intersection *intersection, Object *plane);
 bool intersectSphere(Ray *ray, Intersection *intersection, Object *sphere);
+bool intersectTriangle(Ray *ray, Intersection *intersection, Object *triangle);
 
 void renderImage(Image *img, Scene *scene);
 

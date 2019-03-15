@@ -37,6 +37,10 @@ typedef struct geometry_s {
             vec3 normal;
             float dist;
         } plane;
+        struct {
+            //Triangle
+            vec3 v0,v1,v2;
+        } triangle;
     };
 } Geometry;
 

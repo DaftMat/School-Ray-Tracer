@@ -19,16 +19,16 @@ const float acne_eps = 1e-4;
 //Get the direction from p2 to p1, substracting them.
 
 /* Texturing */
-void findUVObject(const Intersection &intersection, float &u, float &v){
+bool findUVObject(const Intersection &intersection, float &u, float &v){
     switch(intersection.obj->geom.type){
         case SPHERE:
             findUVSphere(intersection, u, v);
-            break;
+            return true;
         case PLANE:
             findUVPlane(intersection, u, v);
-            break;
+            return true;
         default:
-            return;
+            return false;
     }
 }
 
@@ -64,14 +64,17 @@ void findUVPlane(const Intersection &intersection, float &u, float &v){
     v -= floor(v);
 }
 
-void applyBumpTexSphere(Intersection *intersection){
-    if (!intersection->mat->hasBumpTexture){
+void applyBumpTexSphere(Intersection *intersection) {
+    if (!intersection->mat->hasBumpTexture) {
         intersection->normal = intersection->baseNormal;
         return;
     }
 
     float U, V;
-    findUVObject(*intersection, U, V);
+    if (!findUVObject(*intersection, U, V)){
+        intersection->normal = intersection->baseNormal;
+        return;
+    }
 
     auto x = (size_t) (U*float(intersection->mat->bump_texture->width));
     auto y = (size_t) (V*float(intersection->mat->bump_texture->height));
@@ -92,7 +95,8 @@ color3 applyImgTexObject(const Intersection &intersection){
 
 
     float U, V;
-    findUVObject(intersection, U, V);
+    if (!findUVObject(intersection, U, V))
+        return intersection.mat->diffuseColor;
 
     auto x = (size_t) (U*float(intersection.mat->image_texture->width));
     auto y = (size_t) (V*float(intersection.mat->image_texture->height));
@@ -106,7 +110,8 @@ color3 applySpecTexObject(const Intersection &intersection){
     }
 
     float U, V;
-    findUVObject(intersection, U, V);
+    if (!findUVObject(intersection, U, V))
+        return intersection.mat->specularColor;
 
     auto x = (size_t) (U*float(intersection.mat->spec_texture->width));
     auto y = (size_t) (V*float(intersection.mat->spec_texture->height));
@@ -120,7 +125,8 @@ float applyRoughTexObject(const Intersection &intersection){
     }
 
     float U, V;
-    findUVObject(intersection, U, V);
+    if (!findUVObject(intersection, U, V))
+        return intersection.mat->roughness;
 
     auto x = (size_t) (U*float(intersection.mat->rough_texture->width));
     auto y = (size_t) (V*float(intersection.mat->rough_texture->height));
@@ -177,6 +183,41 @@ bool intersectSphere(Ray *ray, Intersection *intersection, Object *obj) {
   return false;
 }
 
+bool intersectTriangle(Ray *ray, Intersection *intersection, Object *triangle){
+    vec3 v0 = triangle->geom.triangle.v0;
+    vec3 v1 = triangle->geom.triangle.v1;
+    vec3 v2 = triangle->geom.triangle.v2;
+
+    //normal calculation
+    vec3 A = v0 - v2;
+    vec3 B = v1 - v2;
+    vec3 N = normalize(cross(B,A));
+    vec3 T = ray->orig - v2;
+
+    if (dot(N, ray->dir) == 0.0f)    return false;
+    else if (dot(N, ray->dir) > 0.0f)    N = -N;
+    vec3 p = cross(ray->dir, B);
+    vec3 q = cross(T, A);
+
+
+    float det = dot(p, A);
+    if (det == 0.0f) return false;
+    float u = (1.f/det)*dot(p, T);
+    if (u < 0.f) return false;
+    float v = (1.f/det)*dot(q, ray->dir);
+    if (v < 0.f || (u+v > 1.f)) return false;
+
+    float t = (1.f/det) * dot(q, B);
+    if (t < ray->tmin || t > ray->tmax)  return false;
+
+    intersection->normal = intersection->baseNormal = normalize(N);
+    intersection->position = rayAt(*ray, t);
+    intersection->mat = &triangle->mat;
+    intersection->obj = triangle;
+    ray->tmax = t;
+    return true;
+}
+
 bool intersectScene(const Scene *scene, Ray *ray, Intersection *intersection) {
 	bool hasIntersection = false;
 	size_t objectCount = scene->objects.size();
@@ -190,6 +231,10 @@ bool intersectScene(const Scene *scene, Ray *ray, Intersection *intersection) {
                 if (intersectSphere(ray, intersection, scene->objects[i]))
                     hasIntersection = true;
                 break;
+		    case TRIANGLE:
+		        if (intersectTriangle(ray, intersection, scene->objects[i]))
+		            hasIntersection = true;
+		        break;
 		}
 	}
 	return hasIntersection;
@@ -397,7 +442,7 @@ void renderImage(Image *img, Scene *scene) {
       color3 *ptr = getPixelPtr(img, i, j);
       vec3 center = scene->cam.center + ray_delta_x + ray_delta_y;
         Ray rx;
-      int nb_rays = 5;
+      int nb_rays = 6;
 
       //Anti-aliasing
       for (float aj = -0.5f+(1.f/(2.f*nb_rays)) ; aj < .5f ; aj+=1.f/nb_rays){

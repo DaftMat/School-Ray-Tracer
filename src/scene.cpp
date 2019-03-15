@@ -1,7 +1,29 @@
 #include "scene.h"
 #include "scene_types.h"
 #include <string.h>
+#include <fstream>
+#include <iostream>
 #include <algorithm>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/rotate_vector.hpp>
+
+
+/* UTILS */
+std::vector<std::string> split(const std::string& str, const std::string& delim)
+{
+    std::vector<std::string> tokens;
+    size_t prev = 0, pos = 0;
+    do
+    {
+        pos = str.find(delim, prev);
+        if (pos == std::string::npos) pos = str.length();
+        std::string token = str.substr(prev, pos-prev);
+        if (!token.empty()) tokens.push_back(token);
+        prev = pos + delim.length();
+    }
+    while (pos < str.length() && prev < str.length());
+    return tokens;
+}
 
 Object *initSphere(point3 center, float radius, Material mat) {
     Object *ret;
@@ -22,6 +44,54 @@ Object *initPlane(vec3 normal, float d, Material mat) {
     ret->geom.plane.dist = d;
     memcpy(&(ret->mat), &mat, sizeof(Material));
     return ret;
+}
+
+Object *initTriangle(vec3 v0, vec3 v1, vec3 v2, Material mat){
+    Object *ret;
+    ret = (Object *)malloc(sizeof(Object));
+    ret->geom.type = TRIANGLE;
+    ret->geom.triangle.v0 = v0;
+    ret->geom.triangle.v1 = v1;
+    ret->geom.triangle.v2 = v2;
+    memcpy(&(ret->mat), &mat, sizeof(Material));
+    return ret;
+}
+
+void initComplex(Scene *scene, const std::string &filename, Material mat, float scale, vec3 pos, float angle){
+
+    std::string line;
+    std::ifstream objFile(filename);
+    if (objFile.is_open()){
+        std::vector<vec3> vertexes;
+        vertexes.emplace_back(vec3(0.f));
+        while (getline(objFile, line)){
+            std::vector<std::string> splittedLine = split(line, " ");
+            std::string specifier;
+            if (splittedLine.empty()){
+                specifier = " ";
+            }else{
+                specifier = splittedLine[0];
+            }
+            if (specifier == "v"){
+                //the line defines a vertex
+                float x = std::stof(splittedLine[1]);
+                float y = std::stof(splittedLine[2]);
+                float z = std::stof(splittedLine[3]);
+                vertexes.emplace_back(pos+(rotate(vec3(x,y,z)*scale, angle, vec3(0.f,1.f,0.f))));
+            }else if (specifier == "f"){
+                //the line defines a triangle
+                std::vector<std::string> strA = split(splittedLine[1], "/");
+                vec3 a = vertexes[size_t(std::stoi(strA[0]))];
+                std::vector<std::string> strB = split(splittedLine[2], "/");
+                vec3 b = vertexes[size_t(std::stoi(strB[0]))];
+                std::vector<std::string> strC = split(splittedLine[3], "/");
+                vec3 c = vertexes[size_t(std::stoi(strC[0]))];
+                addObject(scene, initTriangle(b, a, c, mat));
+            }
+        }
+    }
+
+    objFile.close();
 }
 
 void freeObject(Object *obj) {

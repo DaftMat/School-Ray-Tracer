@@ -106,6 +106,7 @@ Scene *initScene0() {
 
     mat.diffuseColor = color3(0.5f, 0.f, 0.f);
     addObject(scene, initSphere(point3(1, 0, 0), .25, mat));
+    addObject(scene, initTriangle(vec3(0,0,1), vec3(0,0,0), vec3(0,1,0), mat));
 
     mat.diffuseColor = color3(0.f, 0.5f, 0.5f);
     addObject(scene, initSphere(point3(0, 1, 0), .25, mat));
@@ -385,7 +386,7 @@ Scene *initScene1bis(float ior, float t) {
 
 
     mat.hasImgTexture = true;
-    mat.image_texture = loadImageJPG(static_cast<char*>("out/chess2.jpg"));
+    mat.image_texture = loadImageJPG(static_cast<char*>("resources/chess2.jpg"));
   mat.diffuseColor = color3(0.8, 0.06, .014);
   mat.specularColor = color3(1., 1., 1.);
   mat.IOR = 1.001;
@@ -447,6 +448,39 @@ Scene *comparingTexture(bool allTextures){
     addLight(scene, initLight(point3(-2.5,3,1.5), color3(1,1,1)));
     addLight(scene, initLight(point3(0,5,0), color3(1,1,1)));
     addLight(scene, initLight(point3(5,5,5), color3(1,1,1)));
+    return scene;
+}
+
+Scene *initWolfScene() {
+    Scene *scene = initScene();
+    setCamera(scene, point3(4, 2, 0), vec3(0, 0.4, 0), vec3(0, 1, 0), 60,
+              (float)WIDTH / (float)HEIGHT);
+    setSkyColor(scene, color3(0.1f, 0.3f, 0.5f));
+    Material mat;
+    mat.IOR = 1.3;
+    mat.roughness = 0.1;
+    mat.diffuseColor = color3(0.301, 0.034, 0.039);
+    mat.specularColor  = color3(1.0, 0.992, 0.98);
+    mat.transparency = 0.f;
+    mat.hasImgTexture = false;
+    mat.hasBumpTexture = false;
+    mat.hasSpecTexture = false;
+    mat.hasRoughTexture = false;
+
+    initComplex(scene, "resources/wolf.obj", mat, 1.f/700.f, vec3(0.f,0.f,1.f), pi<float>()/4.f);
+    mat.diffuseColor = color3(0.034f,0.301f,0.039f);
+    initComplex(scene, "resources/Wolf.obj", mat, 1.f/200.f, vec3(0.f,0.f,-1.f), pi<float>()/4.f);
+    mat.diffuseColor = color3(0.64f,0.640f,0.66f);
+    mat.roughness = 0.06f;
+    initComplex(scene, "resources/Deer.obj", mat, 1.f/250.f, vec3(-2.f,0.f,-.5f), pi<float>()/3.f);
+
+    mat.hasImgTexture = ((mat.image_texture = loadImageJPG(static_cast<char*>("resources/chess2.jpg"))) == NULL);
+    mat.diffuseColor = color3(0.6f);
+    addObject(scene, initPlane(vec3(0, 1, 0), 0, mat));
+
+    addLight(scene, initLight(point3(10, 10, 10), color3(1, 1, 1)));
+    addLight(scene, initLight(point3(4, 10, -2), color3(1, 1, 1)));
+
     return scene;
 }
 
@@ -524,6 +558,9 @@ int main(int argc, char *argv[]) {
               break;
           case 8:
               scene = comparingTexture(true);
+              break;
+          case 9:
+              scene = initWolfScene();
               break;
           default:
               scene = initScene0();
