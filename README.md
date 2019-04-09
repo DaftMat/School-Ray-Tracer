@@ -20,8 +20,15 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
   - ![GLM (OpenGL Mathematics)](https://github.com/g-truc/glm/tree/master/glm)
   - ![Lode PNG](https://github.com/lvandeve/lodepng)
   
-## Compilation
-  You can open a terminal from the src directory, and use make commande, it will add two executable files : unit-test which you don't need, and mrt
+## Build
+  Go to src, make sure all the dependencies are in this `src` directory. Open a terminal and run the following commands
+    `mkdir build`
+    `cd mkdir`
+    `cmake ..`
+    `make`
+  Then you'll have two executable files in the `build` directory : `mrt` and `unit-test` (<= you don't need this one)
+
+## Execution
   Command : `./mrt [out_file_name] [id_scene]`
   Width `id_scene` from 0 to 8.
   
