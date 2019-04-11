@@ -16,9 +16,10 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
     * Roughness (for the BSDF)
     * Intersection normals
   
-## Dependencies
-  - ![GLM (OpenGL Mathematics)](https://github.com/g-truc/glm/tree/master/glm)
-  - ![Lode PNG](https://github.com/lvandeve/lodepng)
+## Download
+  To download this project you can clone it with the submodules so you can build it and edit it as you want using your favorite environment.
+  - `git clone --recurse-submodules <gitlink>`
+    - hint : you can get the git link clicking on the `clone` button on the top of the repository.
   
 ## Build
   - Go to src, make sure all the dependencies are in this `src` directory. Open a terminal and run the following commands
