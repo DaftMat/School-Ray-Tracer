@@ -370,13 +370,12 @@ color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree, float reflCoef) {
 		    vec3 shadowOrig = intersection.position + acne_eps * l;
 		    rayInit(&shadow, shadowOrig, l, 0.f, t, ray->depth);
 		    Intersection dummy;
-		    ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
             if (!intersectScene(scene, &shadow, &dummy)) {
                 ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
-            }else{
-                if (dummy.mat->transparency > 0.f)
-                    ret += dummy.mat->transparency * shade(intersection.normal, -ray->dir, l, light->color, &intersection);
-            }
+            }//else{
+               // if (dummy.mat->transparency > 0.f)
+               //     ret += dummy.mat->transparency * shade(intersection.normal, -ray->dir, l, light->color, &intersection);
+            //}
 		}
 
         if (ray->depth < 10 && reflCoef > 0.01f){
