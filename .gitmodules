@@ -1,0 +1,6 @@
+[submodule "src/glm-master"]
+	path = src/glm-master
+	url = https://github.com/g-truc/glm
+[submodule "src/lodepng-master"]
+	path = src/lodepng-master
+	url = https://github.com/lvandeve/lodepng
