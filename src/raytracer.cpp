@@ -65,13 +65,8 @@ void findUVPlane(const Intersection &intersection, float &u, float &v){
 }
 
 void applyBumpTexSphere(Intersection *intersection) {
-    if (!intersection->mat->hasBumpTexture) {
-        intersection->normal = intersection->baseNormal;
-        return;
-    }
-
     float U, V;
-    if (!findUVObject(*intersection, U, V)){
+    if (!intersection->mat->hasBumpTexture || !findUVObject(*intersection, U, V)){
         intersection->normal = intersection->baseNormal;
         return;
     }
@@ -372,10 +367,7 @@ color3 trace_ray(Scene *scene, Ray *ray, KdTree *tree, float reflCoef) {
 		    Intersection dummy;
             if (!intersectScene(scene, &shadow, &dummy)) {
                 ret += shade(intersection.normal, -ray->dir, l, light->color, &intersection);
-            }//else{
-               // if (dummy.mat->transparency > 0.f)
-               //     ret += dummy.mat->transparency * shade(intersection.normal, -ray->dir, l, light->color, &intersection);
-            //}
+            }
 		}
 
         if (ray->depth < 10 && reflCoef > 0.01f){

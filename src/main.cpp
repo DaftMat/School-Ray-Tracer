@@ -42,7 +42,7 @@ Material mat_lib[] = {
 
     /* 9 obsidian diffuse only (for tests) */
     {1.5, 0.05f, {0.f, 0.f, 0.f}, {1.f, 1.f, 1.f}, 0.f
-            , loadImageJPG(static_cast<char*>("../resources/obsidianDiffuse.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/obsidianDiffuse.jpg"))
             , nullptr
             , nullptr
             , nullptr
@@ -52,37 +52,37 @@ Material mat_lib[] = {
     {1.5, 0.056, {1.f, 0.9f, 0.86f}, {1.0, 1.056, 1.146}, 1.f, nullptr, nullptr, nullptr, nullptr, false, false, false, false},
 
     /* 11 water */
-    {1.33, 0.06, {1.f, 0.9f, 0.86f}, {0.f, 0.f, 0.f}, 1.f, nullptr, loadImageJPG(static_cast<char*>("../resources/waterNormal.jpg")), nullptr, nullptr, false, true, false, false},
+    {1.33, 0.06, {1.f, 0.9f, 0.86f}, {0.f, 0.f, 0.f}, 1.f, nullptr, loadImageJPG(static_cast<char*>("../../resources/waterNormal.jpg")), nullptr, nullptr, false, true, false, false},
 
     /* 12 obsidian */
     {1.5, 0.05f, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, 0.f
-            , loadImageJPG(static_cast<char*>("../resources/obsidianDiffuse.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/obsidianNormal.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/obsidianSpec.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/obsidianRough.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/obsidianDiffuse.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/obsidianNormal.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/obsidianSpec.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/obsidianRough.jpg"))
             , true, true, true, true},
 
     /* 13 Pavement1 */
     {1.2, 0.3f, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, 0.f
-            , loadImageJPG(static_cast<char*>("../resources/pavement1Diffuse.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement1Normal.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement1Spec.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement1Rough.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement1Diffuse.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement1Normal.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement1Spec.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement1Rough.jpg"))
             , true, true, true, true},
 
     /* 14 Pavement2 */
     {1.1, 0.3f, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, 0.f
-            , loadImageJPG(static_cast<char*>("../resources/pavement2Diffuse.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement2Normal.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement2Spec.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/pavement2Rough.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement2Diffuse.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement2Normal.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement2Spec.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/pavement2Rough.jpg"))
             , true, true, true, true},
 
     /* 15 earth */
     {1.25, 0.3f, {0.f, 0.f, 0.f}, {0.f, 0.f, 0.f}, 0.f
-            , loadImageJPG(static_cast<char*>("../resources/earthDiffuse.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/earthNormal.jpg"))
-            , loadImageJPG(static_cast<char*>("../resources/earthSpec.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/earthDiffuse.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/earthNormal.jpg"))
+            , loadImageJPG(static_cast<char*>("../../resources/earthSpec.jpg"))
             , nullptr
             , true, true, true, false}};
 
@@ -139,6 +139,7 @@ Scene *initScene1() {
     mat.hasBumpTexture = false;
     mat.hasSpecTexture = false;
     mat.hasRoughTexture = false;
+    mat.transparency = 0.f;
 
     for (int i = 0; i < 10; ++i) {
         mat.diffuseColor = color3(0.301, 0.034, 0.039);
@@ -160,7 +161,7 @@ Scene *initScene1() {
     mat.specularColor = color3(1.0, 0.882, 0.786);
     mat.IOR = 2.4449;
     mat.roughness = 0.0681;
-    addObject(scene, initSphere(point3(-3.f, 1.f, 0.f), 2., mat));
+    addObject(scene, initSphere(point3(-3.f, 1.f, 0.f), 2.f, mat));
 
     mat.diffuseColor = color3(0.016, 0.073, 0.04);
     mat.specularColor = color3(1.0, 1.056, 1.146);
@@ -187,6 +188,7 @@ Scene *initScene2() {
     mat.hasBumpTexture = false;
     mat.hasSpecTexture = false;
     mat.hasRoughTexture = false;
+    mat.transparency = 0.f;
 
     mat.diffuseColor = color3(0.05, 0.05, 0.05);
     mat.specularColor = color3(0.95);
@@ -226,6 +228,7 @@ Scene *initScene3() {
     mat.hasBumpTexture = false;
     mat.hasSpecTexture = false;
     mat.hasRoughTexture = false;
+    mat.transparency = 0.f;
 
     addLight(scene, initLight(point3(0, 1.7, 1), .5f * color3(3, 3, 3)));
     addLight(scene, initLight(point3(3, 2, 3), .5f * color3(4, 4, 4)));
@@ -386,7 +389,7 @@ Scene *initScene1bis(float ior, float t) {
 
 
     mat.hasImgTexture = true;
-    mat.image_texture = loadImageJPG(static_cast<char*>("../resources/chess2.jpg"));
+    mat.image_texture = loadImageJPG(static_cast<char*>("../../resources/chess2.jpg"));
   mat.diffuseColor = color3(0.8, 0.06, .014);
   mat.specularColor = color3(1., 1., 1.);
   mat.IOR = 1.001;
@@ -467,14 +470,14 @@ Scene *initWolfScene() {
     mat.hasSpecTexture = false;
     mat.hasRoughTexture = false;
 
-    initComplex(scene, "../resources/wolf.obj", mat, 1.f/700.f, vec3(0.f,0.f,1.f), pi<float>()/4.f);
+    initComplex(scene, "../../resources/wolf.obj", mat, 1.f/700.f, vec3(0.f,0.f,1.f), pi<float>()/4.f);
     mat.diffuseColor = color3(0.034f,0.301f,0.039f);
-    initComplex(scene, "../resources/Wolf.obj", mat, 1.f/200.f, vec3(0.f,0.f,-1.f), pi<float>()/4.f);
+    initComplex(scene, "../../resources/Wolf.obj", mat, 1.f/200.f, vec3(0.f,0.f,-1.f), pi<float>()/4.f);
     mat.diffuseColor = color3(0.64f,0.640f,0.66f);
     mat.roughness = 0.06f;
-    initComplex(scene, "../resources/Deer.obj", mat, 1.f/250.f, vec3(-2.f,0.f,-.5f), pi<float>()/3.f);
+    initComplex(scene, "../../resources/Deer.obj", mat, 1.f/250.f, vec3(-2.f,0.f,-.5f), pi<float>()/3.f);
 
-    mat.hasImgTexture = ((mat.image_texture = loadImageJPG(static_cast<char*>("../resources/chess2.jpg"))) == NULL);
+    mat.hasImgTexture = ((mat.image_texture = loadImageJPG(static_cast<char*>("../../resources/chess2.jpg"))) == NULL);
     mat.diffuseColor = color3(0.6f);
     addObject(scene, initPlane(vec3(0, 1, 0), 0, mat));
 
