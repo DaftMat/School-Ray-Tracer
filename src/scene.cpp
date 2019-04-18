@@ -57,6 +57,54 @@ Object *initTriangle(vec3 v0, vec3 v1, vec3 v2, Material mat){
     return ret;
 }
 
+void initTriFace(Scene *s, vec3 normal, int res, Material mat, float scale, vec3 centerPos, bool sphere){
+    if (res < 2)  res = 2;
+    if (res > 256 )   res = 256;
+
+    vec3 unitU = vec3(normal.y,normal.z,normal.x);
+    vec3 unitV = cross(normal,unitU);
+    std::vector<vec3> points;
+
+    for (int y = 0 ; y < res ; ++y){
+        for (int x = 0 ; x < res ; ++x){
+            vec2 percent = vec2(x,y) * (1.f / (float(res) - 1.f));
+            vec3 currentPoint = normal + (percent.x - .5f) * 2 * unitU + (percent.y - .5f) * 2 * unitV;
+            if (sphere)
+                currentPoint = normalize(currentPoint);
+            currentPoint *= scale;
+            currentPoint += centerPos;
+            points.emplace_back(currentPoint);
+        }
+    }
+
+    for (int y = 0 ; y < res ; ++y){
+        for (int x = 0 ; x < res ; ++x){
+            int i = x + y * res;
+
+            if (x != res - 1 && y != res - 1) {
+                addObject(s, initTriangle(points[i],points[i+res+1],points[i+res], mat));
+                addObject(s, initTriangle(points[i],points[i+1],points[i+res+1], mat));
+            }
+        }
+    }
+}
+
+void initCube(Scene *s, int res, Material mat, float scale, vec3 centerPos){
+    vec3 up = vec3(0,1,0), side = vec3(1,0,0), depth = vec3(0,0,1);
+    vec3 n[6] = {up,-up,side,-side,depth,-depth};
+    for (int i = 0 ; i < 6 ; ++i){
+        initTriFace(s,n[i],res,mat,scale,centerPos,false);
+    }
+}
+
+void initSphere(Scene *s, int res, Material mat, float scale, vec3 centerPos){
+    vec3 up = vec3(0,1,0), side = vec3(1,0,0), depth = vec3(0,0,1);
+    vec3 n[6] = {up,-up,side,-side,depth,-depth};
+    for (int i = 0 ; i < 6 ; ++i){
+        initTriFace(s,n[i],res,mat,scale,centerPos,true);
+    }
+}
+
 void initComplex(Scene *scene, const std::string &filename, Material mat, float scale, vec3 pos, float angle){
 
     std::string line;

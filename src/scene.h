@@ -36,6 +36,9 @@ std::vector<std::string> split(const std::string& str, const std::string& delim)
 Object* initSphere(point3 center, float radius, Material mat);
 Object* initPlane(vec3 normal, float d, Material mat);
 Object* initTriangle(vec3 v0, vec3 v1, vec3 v2, Material mat);
+void initTriFace(Scene *s, vec3 normal, int res, Material mat, bool sphere, float scale, vec3 centerPos);
+void initCube(Scene *s, int res, Material mat, float scale, vec3 centerPos);
+void initSphere(Scene *s, int res, Material mat, float scale, vec3 centerPos);
 void initComplex(Scene *scene, const std::string &filename, Material mat, float scale, vec3 pos, float angle);
 
 //! release memory for the object obj

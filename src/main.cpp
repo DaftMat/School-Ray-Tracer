@@ -432,6 +432,27 @@ Scene *initCustomScene(){
     return scene;
 }
 
+Scene * testTriSphereScene(){
+    Scene *scene = initScene();
+    setCamera(scene, point3(4.5, 2, 4.5), vec3(0, 0.5, 0), vec3(0, 1, 0), 40,
+              (float)WIDTH / (float)HEIGHT);
+    setSkyColor(scene, color3(0.2, 0.2, 0.7));
+
+    Material mat;
+    mat.IOR = 1.12;
+    mat.roughness = 0.2;
+    mat.specularColor = color3(0.4f);
+    mat.diffuseColor = color3(1.f);
+    mat.hasImgTexture = false;
+    mat.hasBumpTexture = false;
+    mat.hasSpecTexture = false;
+    mat.hasRoughTexture = false;
+
+    initSphere(scene, 10, mat, 1.5f, vec3(0,.5f,0));
+    addLight(scene, initLight(point3(2.5,4,-2.5), color3(1,1,1)));
+    return scene;
+}
+
 Scene *comparingTexture(bool allTextures){
     //Bench of spheres with the mats in the matlib
     Scene *scene = initScene();
@@ -564,6 +585,9 @@ int main(int argc, char *argv[]) {
               break;
           case 9:
               scene = initWolfScene();
+              break;
+          case 10:
+              scene = testTriSphereScene();
               break;
           default:
               scene = initScene0();

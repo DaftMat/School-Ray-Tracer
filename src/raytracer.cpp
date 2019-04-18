@@ -433,7 +433,7 @@ void renderImage(Image *img, Scene *scene) {
       color3 *ptr = getPixelPtr(img, i, j);
       vec3 center = scene->cam.center + ray_delta_x + ray_delta_y;
         Ray rx;
-      int nb_rays = 6;
+      int nb_rays = 1;
 
       //Anti-aliasing
       for (float aj = -0.5f+(1.f/(2.f*nb_rays)) ; aj < .5f ; aj+=1.f/nb_rays){
