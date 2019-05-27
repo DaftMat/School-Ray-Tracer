@@ -5,7 +5,7 @@
 
 #define SAVE_PNG
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <stb_image.h>
 
 color3 *getPixelPtr(Image *img, size_t x, size_t y) {
     return &(img->data[y * img->width + x]);

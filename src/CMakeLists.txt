@@ -15,6 +15,8 @@ set(mrt_SRCS
 add_executable (mrt ${mrt_SRCS})
 target_include_directories (mrt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glm-master/ ${CMAKE_CURRENT_SOURCE_DIR}/lodepng-master/ )
 
+include_directories(${CMAKE_SOURCE_DIR}/../3rdparty)
+
 
 set(unit_test_SRCS
         ./image.cpp
