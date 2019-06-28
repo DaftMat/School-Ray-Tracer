@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/DaftMat/School-Ray-Tracer.svg?branch=master)](https://travis-ci.com/DaftMat/School-Ray-Tracer)
+
 # School-Ray-Tracer
 A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
 
