@@ -1,0 +1,3 @@
+language: cpp
+compiler: gcc
+script: mkdir src/build ; cd src/build ; cmake .. ; make -j16 ; ./unit-test
