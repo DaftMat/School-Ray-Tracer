@@ -25,8 +25,8 @@ A more advanced Ray Tracer with shaders, bsdf, anti-aliasing and much more !
   
 ## Build
   - Go to src, make sure all the dependencies are in this `src` directory. Open a terminal and run the following commands
-    - `mkdir build`
-    - `cd build`
+    - `mkdir src/build`
+    - `cd src/build`
     - `cmake ..`
     - `make`
   - Then you'll have two executable files in the `build` directory : `mrt` and `unit-test` (<= you don't need this one)
