@@ -1,3 +1,4 @@
 language: cpp
+os: linux
 compiler: gcc
 script: mkdir src/build ; cd src/build ; cmake .. ; make
