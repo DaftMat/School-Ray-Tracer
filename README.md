@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/648ab2a60cda442dbfeeeafafa098912)](https://app.codacy.com/app/DaftMat/School-Ray-Tracer?utm_source=github.com&utm_medium=referral&utm_content=DaftMat/School-Ray-Tracer&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.com/DaftMat/School-Ray-Tracer.svg?branch=master)](https://travis-ci.com/DaftMat/School-Ray-Tracer)
 
 # School-Ray-Tracer
